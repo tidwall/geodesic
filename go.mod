@@ -1,3 +1,3 @@
-module github.com/tidwall/geodesy
+module github.com/tidwall/geodesic
 
 go 1.17

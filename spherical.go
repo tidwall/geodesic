@@ -9,7 +9,7 @@
 /* www.movable-type.co.uk/scripts/geodesy-library.html#latlon-spherical    */
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-package geodesy
+package geodesic
 
 import "math"
 

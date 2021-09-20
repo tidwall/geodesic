@@ -1,8 +1,8 @@
-# geodesy
+# geodesic
 
-[![GoDoc](https://godoc.org/github.com/tidwall/geodesy?status.svg)](https://godoc.org/github.com/tidwall/geodesy)
+[![GoDoc](https://godoc.org/github.com/tidwall/geodesic?status.svg)](https://godoc.org/github.com/tidwall/geodesic)
 
-`geodesy` is a Go package providing operations for performing accurate measurements of Earth. Includes a Go port of the geodesic routines from [GeographicLib](https://geographiclib.sourceforge.io) along with general-purpose spherical algorithms.
+`geodesic` is a Go package providing operations for performing accurate measurements of Earth. Includes a Go port of the geodesic routines from [GeographicLib](https://geographiclib.sourceforge.io) along with general-purpose spherical algorithms.
 
 ## Features
 
@@ -14,10 +14,10 @@
 
 ## Installing
 
-To start using `geodesy`, install Go and run `go get`:
+To start using `geodesic`, install Go and run `go get`:
 
 ```sh
-$ go get -u github.com/tidwall/geodesy
+$ go get -u github.com/tidwall/geodesic
 ```
 
 This will retrieve the library.
@@ -27,22 +27,22 @@ This will retrieve the library.
 All operations are performed on an Ellipsoid object.
 
 To create a custom ellipsoid:
-- `geodesy.NewEllipsoid`: For highly accurate geodesic routines.
-- `geodesy.NewSpherical`: For faster spherical routines such as Haversine.
+- `geodesic.NewEllipsoid`: For highly accurate geodesic routines.
+- `geodesic.NewSpherical`: For faster spherical routines such as Haversine.
 
 ```go
 // The first argument is the radius and the second is the flattening.
-myEllipsoid := geodesy.NewEllipsoid(6378137.0, 1.0/298.257223563)
+myEllipsoid := geodesic.NewEllipsoid(6378137.0, 1.0/298.257223563)
 ```
 
-Or, you can simply use the built-in `geodesy.WGS84` non-spherical ellipsoid, which conforms to the [WGS84](https://en.wikipedia.org/wiki/World_Geodetic_System) standard.
+Or, you can simply use the built-in `geodesic.WGS84` non-spherical ellipsoid, which conforms to the [WGS84](https://en.wikipedia.org/wiki/World_Geodetic_System) standard.
 
 ```go
 // The argument is the radius.
-mySphere := geodesy.NewSpherical(6378137.0)
+mySphere := geodesic.NewSpherical(6378137.0)
 ```
 
-Or, you can use the `geodesy.Globe` spherical ellipsoid, which represents Earth as a terrestrial globe.
+Or, you can use the `geodesic.Globe` spherical ellipsoid, which represents Earth as a terrestrial globe.
 
 ## Examples
 
@@ -50,7 +50,7 @@ Calculate distance between two points.
 
 ```go
 var dist float64
-geodesy.WGS84.Inverse(33.4911, -112.4223, 32.1189, -113.1123, &dist, nil, nil)
+geodesic.WGS84.Inverse(33.4911, -112.4223, 32.1189, -113.1123, &dist, nil, nil)
 fmt.Printf("%f meters\n", dist)
 // output: 
 // 165330.214571 meters
@@ -60,7 +60,7 @@ Calculate initial azimuth from point A to point B.
 
 ```go
 var azi float64
-geodesy.WGS84.Inverse(33.4911, -112.4223, 32.1189, -113.1123, nil, &azi, nil)
+geodesic.WGS84.Inverse(33.4911, -112.4223, 32.1189, -113.1123, nil, &azi, nil)
 fmt.Printf("%f degrees\n", azi)
 // output:
 // -156.803310 degrees
@@ -70,7 +70,7 @@ Calculate final azimuth from point A to point B.
 
 ```go
 var azi float64
-geodesy.WGS84.Inverse(33.4911, -112.4223, 32.1189, -113.1123, nil, nil, &azi)
+geodesic.WGS84.Inverse(33.4911, -112.4223, 32.1189, -113.1123, nil, nil, &azi)
 fmt.Printf("%f degrees\n", azi)
 // output:
 // -157.177169 degrees
@@ -80,7 +80,7 @@ Calculate distance and azimuths at the same time.
 
 ```go
 var dist, azi1, azi2 float64
-geodesy.WGS84.Inverse(33.4911, -112.4223, 32.1189, -113.1123, &dist, &azi1, &azi2)
+geodesic.WGS84.Inverse(33.4911, -112.4223, 32.1189, -113.1123, &dist, &azi1, &azi2)
 fmt.Printf("%f meters, %f degrees, %f degrees\n", dist,azi1,azi2)
 // output:
 // 165330.214571 meters, -156.803310 degrees, -157.177169 degrees
@@ -90,7 +90,7 @@ Calculate destination using an initial point, azimuth, and distance.
 
 ```go
 var lat, lon float64
-geodesy.WGS84.Direct(33.4911, -112.4223, -156.803310, 165330.214571, &lat, &lon, nil)
+geodesic.WGS84.Direct(33.4911, -112.4223, -156.803310, 165330.214571, &lat, &lon, nil)
 fmt.Printf("%f, %f\n", lat, lon)
 // output: 
 // 32.118900, -113.112300

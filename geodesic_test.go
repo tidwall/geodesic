@@ -1,4 +1,4 @@
-package geodesy
+package geodesic
 
 import (
 	"encoding/binary"
