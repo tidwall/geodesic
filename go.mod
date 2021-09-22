@@ -2,7 +2,8 @@ module github.com/tidwall/geodesic
 
 go 1.17
 
-// these versions no longer exist in trunk
+// no longer exists in trunk
 retract v1.52.1
 
+// no longer exists in trunk
 retract v1.52.2
