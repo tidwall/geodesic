@@ -1,10 +1,10 @@
 package geodesic
 
 import (
+	_ "embed"
 	"encoding/binary"
 	"math"
 	"math/rand"
-	"os"
 	"testing"
 	"time"
 )
@@ -12,7 +12,8 @@ import (
 // The "test.data" file has been generated from the
 // https://github.com/tidwall/geodesic_cgo project.
 
-const testDataPath = "test.data"
+//go:embed test.data
+var testData []byte
 
 func eqish(x, y float64, prec int) bool {
 	return math.Abs(x-y) < float64(1.0)/math.Pow10(prec)
@@ -27,10 +28,7 @@ func readFloats(src []byte, count int) []float64 {
 }
 
 func TestInput(t *testing.T) {
-	data, err := os.ReadFile(testDataPath)
-	if err != nil {
-		t.Fatal(err)
-	}
+	data := testData
 	for i := 0; i < len(data); {
 		if data[i] == 'I' {
 			v := readFloats(data[i+1:], 7)
@@ -47,7 +45,7 @@ func TestInput(t *testing.T) {
 			i += 8 * 8
 			testPolygon(t, points, vals)
 		} else {
-			t.Fatalf("invalid %s", testDataPath)
+			t.Fatalf("invalid test data")
 		}
 	}
 }
@@ -70,6 +68,7 @@ func testPolygon(t *testing.T, points []float64, vals []float64) {
 }
 
 func testInverse(t *testing.T, lat1, lon1, lat2, lon2, s12, azi1, azi2 float64) {
+	t.Helper()
 	var s12ret, azi1ret, azi2ret float64
 	WGS84.Inverse(lat1, lon1, lat2, lon2, &s12ret, &azi1ret, &azi2ret)
 	if !eqish(s12ret, s12, 7) || !eqish(azi1ret, azi1, 7) || !eqish(azi2ret, azi2, 7) {
@@ -79,11 +78,14 @@ func testInverse(t *testing.T, lat1, lon1, lat2, lon2, s12, azi1, azi2 float64) 
 }
 
 func testDirect(t *testing.T, lat1, lon1, lat2, lon2, s12, azi1, azi2 float64) {
+	t.Helper()
 	var lat2ret, lon2ret, azi2ret float64
 	WGS84.Direct(lat1, lon1, azi1, s12, &lat2ret, &lon2ret, &azi2ret)
 	if !eqish(lat2ret, lat2, 7) || !eqish(lon2ret, lon2, 7) || !eqish(azi2ret, azi2, 7) {
-		t.Fatalf("expected '%f, %f, %f', got '%f, %f, %f'",
-			lat2, lon2, azi2, lat2ret, lon2ret, azi2ret)
+		t.Logf("direct   'lat1: %f, lon1: %f, azi1: %f, s12: %f'\n", lat1, lon1, azi1, s12)
+		t.Logf("expected 'lat2: %f, lon2: %f, azi2: %f'\n", lat2, lon2, azi2)
+		t.Logf("got      'lat2: %f, lon2: %f, azi2: %f'", lat2ret, lon2ret, azi2ret)
+		t.FailNow()
 	}
 }
 
