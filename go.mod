@@ -2,9 +2,8 @@ module github.com/tidwall/geodesic
 
 go 1.17
 
-// versions that no longer exists in trunk
 retract (
-	v1.52.3
-	v1.52.2
-	v1.52.1
+	v1.52.3 // equal to v0.3.1
+	v1.52.2 // no longer in trunk
+	v1.52.1 // no longer in trunk
 )
