@@ -2504,7 +2504,7 @@ func sign(a float64) float64 {
 	return 0
 }
 
-// crossAlongSuffix performs both  ross-track and/or along-track operations
+// crossAlongSuffix performs both cross-track and/or along-track operations
 func crossAlongSuffix(
 	e *Ellipsoid,
 	// position of point
