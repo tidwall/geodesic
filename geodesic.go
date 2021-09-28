@@ -4,7 +4,9 @@
 
 package geodesic
 
-import "math"
+import (
+	"math"
+)
 
 const (
 	pi                         = float64(math.Pi)
@@ -28,27 +30,33 @@ const (
 	realmin                    = math.SmallestNonzeroFloat64
 )
 
+// Mask values for the caps argument to InverseLine
+type Mask uint
+
 const (
-	geodNone          = 0                   /**< Calculate nothing */
-	geodLatitude      = 1 << 7              /**< Calculate latitude */
-	geodLongitude     = 1<<8 | 1<<3         /**< Calculate longitude */
-	geodAzimuth       = 1 << 9              /**< Calculate azimuth */
-	geosDistance      = 1<<10 | 1<<0        /**< Calculate distance */
-	geodDistanceIn    = 1<<11 | 1<<0 | 1<<1 /**< Allow distance as input  */
-	geodReducedLength = 1<<12 | 1<<0 | 1<<2 /**< Calculate reduced length */
-	geodGeodesicScale = 1<<13 | 1<<0 | 1<<2 /**< Calculate geodesic scale */
-	geodArea          = 1<<14 | 1<<4        /**< Calculate reduced length */
-	geodAll           = 0x7F80 | 0x1F       /**< Calculate everything */
+	None          Mask = 0                   /**< Calculate nothing */
+	Latitude      Mask = 1 << 7              /**< Calculate latitude */
+	Longitude     Mask = 1<<8 | 1<<3         /**< Calculate longitude */
+	Azimuth       Mask = 1 << 9              /**< Calculate azimuth */
+	Distance      Mask = 1<<10 | 1<<0        /**< Calculate distance */
+	DistanceIn    Mask = 1<<11 | 1<<0 | 1<<1 /**< Allow distance as input  */
+	ReducedLength Mask = 1<<12 | 1<<0 | 1<<2 /**< Calculate reduced length */
+	GeodesicScale Mask = 1<<13 | 1<<0 | 1<<2 /**< Calculate geodesic scale */
+	Area          Mask = 1<<14 | 1<<4        /**< Calculate reduced length */
+	All           Mask = 0x7F80 | 0x1F       /**< Calculate everything */
 )
 
 /**
- * flag values for the \e flags argument to geod_gendirect() and
- * geod_genposition()
+ *
  **********************************************************************/
+
+// Flag values for the flags argument to GenPosition
+type Flags uint
+
 const (
-	geodNoFlags    = 0       /**< No flags */
-	geodArcMode    = 1 << 0  /**< Position given in terms of arc distance */
-	geodLongUnroll = 1 << 15 /**< Unroll the longitude */
+	NoFlags    Flags = 0       /**< No flags */
+	ArcMode    Flags = 1 << 0  /**< Position given in terms of arc distance */
+	LongUnroll Flags = 1 << 15 /**< Unroll the longitude */
 )
 
 const (
@@ -168,18 +176,18 @@ func geodGenInverseInt(g *geodGeodesic,
 	var omg12, somg12, comg12 float64
 	somg12 = 2
 
-	var outmask uint
+	var outmask Mask
 	if ps12 != nil {
-		outmask |= geosDistance
+		outmask |= Distance
 	}
 	if pm12 != nil {
-		outmask |= geodReducedLength
+		outmask |= ReducedLength
 	}
 	if pM12 != nil || pM21 != nil {
-		outmask |= geodGeodesicScale
+		outmask |= GeodesicScale
 	}
 	if pS12 != nil {
-		outmask |= geodArea
+		outmask |= Area
 	}
 	outmask &= outAll
 	/* Compute longitude difference (AngDiff does this carefully).  Result is
@@ -299,7 +307,7 @@ func geodGenInverseInt(g *geodGeodesic,
 		sig12 = atan2(maxx(0, csig1*ssig2-ssig1*csig2),
 			csig1*csig2+ssig1*ssig2)
 		var a, b *float64
-		if outmask&geodGeodesicScale != 0 {
+		if outmask&GeodesicScale != 0 {
 			a = &M12
 			b = &M21
 		}
@@ -339,7 +347,7 @@ func geodGenInverseInt(g *geodGeodesic,
 		omg12 = lam12 / g.f1
 		sig12 = omg12
 		m12x = g.b * sin(sig12)
-		if outmask&geodGeodesicScale != 0 {
+		if outmask&GeodesicScale != 0 {
 			M21 = cos(sig12)
 			M12 = M21
 		}
@@ -361,7 +369,7 @@ func geodGenInverseInt(g *geodGeodesic,
 			/* Short lines (InverseStart sets salp2, calp2, dnm) */
 			s12x = sig12 * g.b * dnm
 			m12x = sq(dnm) * g.b * sin(sig12/dnm)
-			if outmask&geodGeodesicScale != 0 {
+			if outmask&GeodesicScale != 0 {
 				M21 = cos(sig12 / dnm)
 				M12 = M21
 			}
@@ -447,7 +455,7 @@ func geodGenInverseInt(g *geodGeodesic,
 
 			var v1 *float64
 			var v2 *float64
-			if outmask&geodGeodesicScale != 0 {
+			if outmask&GeodesicScale != 0 {
 				v1 = &M12
 				v2 = &M21
 			}
@@ -460,7 +468,7 @@ func geodGenInverseInt(g *geodGeodesic,
 			s12x *= g.b
 			a12 = sig12 / degree
 
-			if outmask&geodArea != 0 {
+			if outmask&Area != 0 {
 				/* omg12 = lam12 - domg12 */
 				sdomg12, cdomg12 := sincos(domg12)
 				somg12 = slam12*cdomg12 - clam12*sdomg12
@@ -469,15 +477,15 @@ func geodGenInverseInt(g *geodGeodesic,
 		}
 	}
 
-	if outmask&geosDistance != 0 {
+	if outmask&Distance != 0 {
 		s12 = 0 + s12x /* Convert -0 to 0 */
 	}
 
-	if outmask&geodReducedLength != 0 {
+	if outmask&ReducedLength != 0 {
 		m12 = 0 + m12x /* Convert -0 to 0 */
 	}
 
-	if outmask&geodArea != 0 {
+	if outmask&Area != 0 {
 		/* From Lambda12: sin(alp1) * cos(bet1) = sin(alp0) */
 		salp0 := salp1 * cbet1
 		calp0 := hypot(calp1, salp1*sbet1) /* calp0 > 0 */
@@ -543,7 +551,7 @@ func geodGenInverseInt(g *geodGeodesic,
 	if swapp < 0 {
 		salp1, salp2 = salp2, salp1
 		calp1, calp2 = calp2, calp1
-		if outmask&geodGeodesicScale != 0 {
+		if outmask&GeodesicScale != 0 {
 			M12, M21 = M21, M12
 		}
 	}
@@ -566,13 +574,13 @@ func geodGenInverseInt(g *geodGeodesic,
 		*pcalp2 = calp2
 	}
 
-	if outmask&geosDistance != 0 {
+	if outmask&Distance != 0 {
 		*ps12 = s12
 	}
-	if outmask&geodReducedLength != 0 {
+	if outmask&ReducedLength != 0 {
 		*pm12 = m12
 	}
-	if outmask&geodGeodesicScale != 0 {
+	if outmask&GeodesicScale != 0 {
 		if pM12 != nil {
 			*pM12 = M12
 		}
@@ -580,7 +588,7 @@ func geodGenInverseInt(g *geodGeodesic,
 			*pM21 = M21
 		}
 	}
-	if outmask&geodArea != 0 {
+	if outmask&Area != 0 {
 		*pS12 = S12
 	}
 
@@ -1540,7 +1548,7 @@ func geodDirect(g *geodGeodesic,
 	lat1 float64, lon1 float64, azi1 float64,
 	s12 float64,
 	plat2 *float64, plon2 *float64, pazi2 *float64) {
-	geodGenDirect(g, lat1, lon1, azi1, geodNoFlags, s12, plat2, plon2, pazi2,
+	geodGenDirect(g, lat1, lon1, azi1, NoFlags, s12, plat2, plon2, pazi2,
 		nil, nil, nil, nil, nil)
 }
 
@@ -1565,46 +1573,82 @@ type geodGeodesicLine struct {
 	C3a  [6]float64
 	C4a  [6]float64
 	/**< @endcond */
-	caps uint /**< the capabilities */
+	caps Mask /**< the capabilities */
+}
+
+func geodInverseLine(
+	l *geodGeodesicLine,
+	g *geodGeodesic,
+	// struct geod_geodesicline* l,
+	// const struct geod_geodesic* g,
+	lat1, lon1, lat2, lon2 float64,
+	caps Mask,
+) {
+	var salp1, calp1 float64
+	a12 := geodGenInverseInt(
+		g, lat1, lon1, lat2, lon2, nil,
+		&salp1, &calp1, nil, nil,
+		nil, nil, nil, nil)
+	azi1 := atan2dx(salp1, calp1)
+	if caps == 0 {
+		caps = DistanceIn | Longitude
+	}
+	/* Ensure that a12 can be converted to a distance */
+	if (caps & (outAll & DistanceIn)) != 0 {
+		caps |= Distance
+	}
+	geodLineInitInt(l, g, lat1, lon1, azi1, salp1, calp1, caps)
+	geodSetArc(l, a12)
+}
+
+func geodSetArc(l *geodGeodesicLine, a13 float64) {
+	l.a13 = a13
+	l.s13 = math.NaN()
+	geodGenPosition(l, ArcMode, l.a13, nil, nil, nil, &l.s13,
+		nil, nil, nil, nil)
+}
+
+func geodPosition(l *geodGeodesicLine, s12 float64, lat2, lon2, azi2 *float64) {
+	geodGenPosition(l, 0, s12, lat2, lon2, azi2, nil, nil, nil, nil, nil)
 }
 
 func geodGenDirect(
 	g *geodGeodesic,
 	lat1 float64, lon1 float64, azi1 float64,
-	flags uint, s12A12 float64,
+	flags Flags, s12A12 float64,
 	plat2 *float64, plon2 *float64, pazi2 *float64,
 	ps12 *float64, pm12 *float64, pM12 *float64, pM21 *float64,
 	pS12 *float64,
 ) float64 {
 	var l geodGeodesicLine
-	var outmask uint
+	var outmask Mask
 	if plat2 != nil {
-		outmask |= geodLatitude
+		outmask |= Latitude
 	}
 	if plon2 != nil {
-		outmask |= geodLongitude
+		outmask |= Longitude
 	}
 	if pazi2 != nil {
-		outmask |= geodAzimuth
+		outmask |= Azimuth
 	}
 	if ps12 != nil {
-		outmask |= geosDistance
+		outmask |= Distance
 	}
 	if pm12 != nil {
-		outmask |= geodReducedLength
+		outmask |= ReducedLength
 	}
 	if pM12 != nil || pM21 != nil {
-		outmask |= geodGeodesicScale
+		outmask |= GeodesicScale
 	}
 	if pS12 != nil {
-		outmask |= geodArea
+		outmask |= Area
 	}
-	var moremask uint
-	if flags&geodArcMode == 0 {
-		moremask = geodDistanceIn
+	var moremask Mask
+	if flags&ArcMode == 0 {
+		moremask = DistanceIn
 	}
 	geodLineInit(&l, g, lat1, lon1, azi1,
-		/* Automatically supply GEOD_DISTANCE_IN if necessary */
+		/* Automatically supply Distance_IN if necessary */
 		outmask|moremask)
 
 	return geodGenPosition(&l, flags, s12A12,
@@ -1614,7 +1658,7 @@ func geodGenDirect(
 func geodLineInit(
 	l *geodGeodesicLine,
 	g *geodGeodesic,
-	lat1 float64, lon1 float64, azi1 float64, caps uint) {
+	lat1 float64, lon1 float64, azi1 float64, caps Mask) {
 	var salp1, calp1 float64
 	azi1 = angNormalize(azi1)
 	/* Guard against underflow in salp0 */
@@ -1628,7 +1672,7 @@ func geodLineInitInt(
 	g *geodGeodesic,
 	lat1 float64, lon1 float64,
 	azi1 float64, salp1 float64, calp1 float64,
-	caps uint) {
+	caps Mask) {
 	var cbet1, sbet1, eps float64
 	l.a = g.a
 	l.f = g.f
@@ -1637,10 +1681,10 @@ func geodLineInitInt(
 	l.f1 = g.f1
 	/* If caps is 0 assume the standard direct calculation */
 	if caps != 0 {
-		l.caps = geodDistanceIn | geodLongitude
+		l.caps = DistanceIn | Longitude
 	}
 	/* always allow latitude and azimuth and unrolling of longitude */
-	l.caps |= geodLatitude | geodAzimuth | geodLongUnroll
+	l.caps |= Latitude | Azimuth | Mask(LongUnroll)
 
 	l.lat1 = latFix(lat1)
 	l.lon1 = lon1
@@ -1753,7 +1797,7 @@ func c1pf(eps float64, c []float64) {
 
 func geodGenPosition(
 	l *geodGeodesicLine,
-	flags uint, s12A12 float64,
+	flags Flags, s12A12 float64,
 	plat2 *float64, plon2 *float64, pazi2 *float64,
 	ps12 *float64, pm12 *float64,
 	pM12 *float64, pM21 *float64,
@@ -1765,36 +1809,36 @@ func geodGenPosition(
 	var sig12, ssig12, csig12, B12, AB1 float64
 	var omg12, lam12, lon12 float64
 	var ssig2, csig2, sbet2, cbet2, somg2, comg2, salp2, calp2, dn2 float64
-	var outmask uint
+	var outmask Mask
 	if plat2 != nil {
-		outmask |= geodLatitude
+		outmask |= Latitude
 	}
 	if plon2 != nil {
-		outmask |= geodLongitude
+		outmask |= Longitude
 	}
 	if pazi2 != nil {
-		outmask |= geodAzimuth
+		outmask |= Azimuth
 	}
 	if ps12 != nil {
-		outmask |= geosDistance
+		outmask |= Distance
 	}
 	if pm12 != nil {
-		outmask |= geodReducedLength
+		outmask |= ReducedLength
 	}
 	if pM12 != nil || pM21 != nil {
-		outmask |= geodGeodesicScale
+		outmask |= GeodesicScale
 	}
 	if pS12 != nil {
-		outmask |= geodArea
+		outmask |= Area
 	}
 	outmask &= l.caps & outAll
 
-	if !(flags&geodArcMode != 0 || (l.caps&(geodDistanceIn&outAll)) != 0) {
+	if !(flags&ArcMode != 0 || (l.caps&(DistanceIn&outAll)) != 0) {
 		// /* Impossible distance calculation requested */
 		return math.NaN()
 	}
 
-	if flags&geodArcMode != 0 {
+	if flags&ArcMode != 0 {
 		/* Interpret s12_a12 as spherical arc length */
 		sig12 = s12A12 * degree
 		sincosdx(s12A12, &ssig12, &csig12)
@@ -1847,8 +1891,8 @@ func geodGenPosition(
 	ssig2 = l.ssig1*csig12 + l.csig1*ssig12
 	csig2 = l.csig1*csig12 - l.ssig1*ssig12
 	dn2 = sqrt(1 + l.k2*sq(ssig2))
-	if outmask&(geosDistance|geodReducedLength|geodGeodesicScale) != 0 {
-		if flags&geodArcMode != 0 || fabs(l.f) > 0.01 {
+	if outmask&(Distance|ReducedLength|GeodesicScale) != 0 {
+		if flags&ArcMode != 0 || fabs(l.f) > 0.01 {
 			B12 = sinCosSeries(iTrue, ssig2, csig2, l.C1a[:], nC1)
 		}
 		AB1 = (1 + l.A1m1) * (B12 - l.B11)
@@ -1866,22 +1910,22 @@ func geodGenPosition(
 	salp2 = l.salp0
 	calp2 = l.calp0 * csig2 /* No need to normalize */
 
-	if (outmask & geosDistance) != 0 {
-		if flags&geodArcMode != 0 {
+	if (outmask & Distance) != 0 {
+		if flags&ArcMode != 0 {
 			s12 = l.b * ((1+l.A1m1)*sig12 + AB1)
 		} else {
 			s12 = s12A12
 		}
 	}
 
-	if outmask&geodLongitude != 0 {
+	if outmask&Longitude != 0 {
 		E := copysign(1, l.salp0) /* east or west going? */
 		/* tan(omg2) = sin(alp0) * tan(sig2) */
 		somg2 = l.salp0 * ssig2
 		comg2 = csig2 /* No need to normalize */
 		/* omg12 = omg2 - omg1 */
 
-		if (flags & geodLongUnroll) != 0 {
+		if (flags & LongUnroll) != 0 {
 			omg12 = E * (sig12 - (atan2(ssig2, csig2) - atan2(l.ssig1, l.csig1)) + (atan2(E*somg2, comg2) - atan2(E*l.somg1, l.comg1)))
 		} else {
 			omg12 = atan2(somg2*l.comg1-comg2*l.somg1, comg2*l.comg1+somg2*l.somg1)
@@ -1890,31 +1934,31 @@ func geodGenPosition(
 			(sig12+(sinCosSeries(iTrue, ssig2, csig2, l.C3a[:], nC3-1)-l.B31))
 		lon12 = lam12 / degree
 
-		if (flags & geodLongUnroll) != 0 {
+		if (flags & LongUnroll) != 0 {
 			lon2 = l.lon1 + lon12
 		} else {
 			lon2 = angNormalize(angNormalize(l.lon1) + angNormalize(lon12))
 		}
 	}
 
-	if outmask&geodLatitude != 0 {
+	if outmask&Latitude != 0 {
 		lat2 = atan2dx(sbet2, l.f1*cbet2)
 	}
 
-	if (outmask & geodAzimuth) != 0 {
+	if (outmask & Azimuth) != 0 {
 		azi2 = atan2dx(salp2, calp2)
 	}
 
-	if outmask&(geodReducedLength|geodGeodesicScale) != 0 {
+	if outmask&(ReducedLength|GeodesicScale) != 0 {
 		B22 := sinCosSeries(iTrue, ssig2, csig2, l.C2a[:], nC2)
 		AB2 := (1 + l.A2m1) * (B22 - l.B21)
 		J12 := (l.A1m1-l.A2m1)*sig12 + (AB1 - AB2)
-		if outmask&geodReducedLength != 0 {
+		if outmask&ReducedLength != 0 {
 			/* Add parens around (csig1 * ssig2) and (ssig1 * csig2) to ensure
 			* accurate cancellation in the case of coincident points. */
 			m12 = l.b * ((dn2*(l.csig1*ssig2) - l.dn1*(l.ssig1*csig2)) - l.csig1*csig2*J12)
 		}
-		if outmask&geodGeodesicScale != 0 {
+		if outmask&GeodesicScale != 0 {
 			t := l.k2 * (ssig2 - l.ssig1) * (ssig2 + l.ssig1) /
 				(l.dn1 + dn2)
 			M12 = csig12 + (t*ssig2-csig2*J12)*l.ssig1/l.dn1
@@ -1922,7 +1966,7 @@ func geodGenPosition(
 		}
 	}
 
-	if outmask&geodArea != 0 {
+	if outmask&Area != 0 {
 		B42 := sinCosSeries(iFalse, ssig2, csig2, l.C4a[:], nC4)
 		var salp12, calp12 float64
 		if l.calp0 == 0 || l.salp0 == 0 {
@@ -1958,22 +2002,22 @@ func geodGenPosition(
 	* the second check "&& pYY" is redundant.  It's there to make the CLang
 	* static analyzer happy.
 	 */
-	if (outmask&geodLatitude) != 0 && plat2 != nil {
+	if (outmask&Latitude) != 0 && plat2 != nil {
 		*plat2 = lat2
 	}
-	if (outmask&geodLongitude) != 0 && plon2 != nil {
+	if (outmask&Longitude) != 0 && plon2 != nil {
 		*plon2 = lon2
 	}
-	if (outmask&geodAzimuth) != 0 && pazi2 != nil {
+	if (outmask&Azimuth) != 0 && pazi2 != nil {
 		*pazi2 = azi2
 	}
-	if (outmask&geosDistance) != 0 && ps12 != nil {
+	if (outmask&Distance) != 0 && ps12 != nil {
 		*ps12 = s12
 	}
-	if (outmask&geodReducedLength) != 0 && pm12 != nil {
+	if (outmask&ReducedLength) != 0 && pm12 != nil {
 		*pm12 = m12
 	}
-	if (outmask & geodGeodesicScale) != 0 {
+	if (outmask & GeodesicScale) != 0 {
 		if pM12 != nil {
 			*pM12 = M12
 		}
@@ -1981,10 +2025,10 @@ func geodGenPosition(
 			*pM21 = M21
 		}
 	}
-	if (outmask&geodArea) != 0 && pS12 != nil {
+	if (outmask&Area) != 0 && pS12 != nil {
 		*pS12 = S12
 	}
-	if (flags & geodArcMode) != 0 {
+	if (flags & ArcMode) != 0 {
 		return s12A12
 	}
 	return sig12 / degree
@@ -2194,10 +2238,10 @@ func geodPolygonAddEdge(g *geodGeodesic, p *geodPolygon, azi, s float64) {
 	if p.num != 0 {
 		var lat, lon, S12 float64
 		if p.polyline {
-			geodGenDirect(g, p.lat, p.lon, azi, geodLongUnroll, s,
+			geodGenDirect(g, p.lat, p.lon, azi, LongUnroll, s,
 				&lat, &lon, nil, nil, nil, nil, nil, &S12)
 		} else {
-			geodGenDirect(g, p.lat, p.lon, azi, geodLongUnroll, s,
+			geodGenDirect(g, p.lat, p.lon, azi, LongUnroll, s,
 				&lat, &lon, nil, nil, nil, nil, nil, nil)
 		}
 
@@ -2210,6 +2254,205 @@ func geodPolygonAddEdge(g *geodGeodesic, p *geodPolygon, azi, s float64) {
 		p.lon = lon
 		p.num++
 	}
+}
+
+func geodGenDirectLine(
+	l *geodGeodesicLine,
+	g *geodGeodesic,
+	lat1, lon1, azi1 float64,
+	flags Flags, s12_a12 float64,
+	caps Mask,
+) {
+	geodLineInit(l, g, lat1, lon1, azi1, caps)
+	geodGenSetDistance(l, flags, s12_a12)
+}
+
+func geodGenSetDistance(l *geodGeodesicLine, flags Flags, s13_a13 float64) {
+	if (flags & ArcMode) != 0 {
+		geodSetArc(l, s13_a13)
+	} else {
+		geodSetDistance(l, s13_a13)
+	}
+}
+
+func geodSetDistance(l *geodGeodesicLine, s13 float64) {
+	l.s13 = s13
+	l.a13 = geodGenPosition(l, NoFlags, l.s13, nil, nil, nil,
+		nil, nil, nil, nil, nil)
+}
+
+func geodDirectLine(
+	l *geodGeodesicLine, g *geodGeodesic,
+	lat1, lon1, azi1, s12 float64, caps Mask,
+) {
+	geodGenDirectLine(l, g, lat1, lon1, azi1, NoFlags, s12, caps)
+}
+
+func geodPolygonTestPoint(g *geodGeodesic, p *geodPolygon,
+	lat, lon float64, reverse, sign bool, pA, pP *float64,
+) uint {
+	var perimeter, tempsum float64
+	var crossings, i int
+	num := p.num + 1
+	if num == 1 {
+		if pP != nil {
+			*pP = 0
+		}
+		if !p.polyline && pA != nil {
+			*pA = 0
+		}
+		return num
+	}
+	perimeter = p.P[0]
+	if p.polyline {
+		tempsum = 0
+	} else {
+		tempsum = p.A[0]
+	}
+	crossings = p.crossings
+	var n int
+	if p.polyline {
+		n = 1
+	} else {
+		n = 2
+	}
+	for i = 0; i < n; i++ {
+		var s12, S12 float64 /* Initialize S12 to stop Visual Studio warning */
+		var alat1, alon1 float64
+		if i == 0 {
+			alat1 = p.lat
+			alon1 = p.lon
+		} else {
+			alat1 = lat
+			alon1 = lon
+		}
+		var alat2, alon2 float64
+		if i != 0 {
+			alat2 = p.lat0
+			alon2 = p.lon0
+		} else {
+			alat2 = lat
+			alon2 = lon
+		}
+		var aS12 *float64
+		if !p.polyline {
+			aS12 = &S12
+		}
+		geodGenInverse(g, alat1, alon1, alat2, alon2, &s12, nil, nil, nil, nil, nil, aS12)
+		perimeter += s12
+		if !p.polyline {
+			tempsum += S12
+			var alon1, alon2 float64
+			if i == 0 {
+				alon1 = p.lon
+			} else {
+				alon1 = lon
+			}
+			if i != 0 {
+				alon2 = p.lon0
+			} else {
+				alon2 = lon
+			}
+			crossings += transit(alon1, alon2)
+		}
+	}
+	if pP != nil {
+		*pP = perimeter
+	}
+	if p.polyline {
+		return num
+	}
+	if pA != nil {
+		*pA = areareduceB(tempsum, 4*pi*g.c2, crossings, reverse, sign)
+	}
+	return num
+}
+
+func geodPolygonTestEdge(g *geodGeodesic, p *geodPolygon,
+	azi, s float64,
+	reverse, sign bool,
+	pA, pP *float64,
+) uint {
+	var perimeter, tempsum float64
+	var crossings int
+	var num = p.num + 1
+	if num == 1 { /* we don't have a starting point! */
+		if pP != nil {
+			*pP = math.NaN()
+		}
+		if !p.polyline && pA != nil {
+			*pA = math.NaN()
+		}
+		return 0
+	}
+	perimeter = p.P[0] + s
+	if p.polyline {
+		if pP != nil {
+			*pP = perimeter
+		}
+		return num
+	}
+
+	tempsum = p.A[0]
+	crossings = p.crossings
+	{
+		/* Initialization of lat, lon, and S12 is to make CLang static analyzer
+		* happy. */
+		var lat, lon, s12, S12 float64
+		geodGenDirect(g, p.lat, p.lon, azi, LongUnroll, s,
+			&lat, &lon, nil,
+			nil, nil, nil, nil, &S12)
+		tempsum += S12
+		crossings += transitdirect(p.lon, lon)
+		geodGenInverse(g, lat, lon, p.lat0, p.lon0,
+			&s12, nil, nil, nil, nil, nil, &S12)
+		perimeter += s12
+		tempsum += S12
+		crossings += transit(lon, p.lon0)
+	}
+
+	if pP != nil {
+		*pP = perimeter
+	}
+	if pA != nil {
+		*pA = areareduceB(tempsum, 4*pi*g.c2, crossings, reverse, sign)
+	}
+	return num
+}
+
+func areareduceB(area, area0 float64,
+	crossings int, reverse, sign bool,
+) float64 {
+	area = remainder(area, area0)
+	if (crossings & 1) != 0 {
+		var x float64
+		if area < 0 {
+			x = 1
+		} else {
+			x = -1
+		}
+		area += x * area0 / 2
+	}
+	/* area is with the clockwise sense.  If !reverse convert to
+	* counter-clockwise convention. */
+	if !reverse {
+		area *= -1
+	}
+	/* If sign put area in (-area0/2, area0/2], else put area in [0, area0) */
+	if sign {
+		if area > area0/2 {
+			area -= area0
+		} else if area <= -area0/2 {
+			area += area0
+		}
+	} else {
+		if area >= area0 {
+			area -= area0
+		} else if area < 0 {
+			area += area0
+		}
+	}
+	return 0 + area
 }
 
 const radians = math.Pi / 180
@@ -2320,6 +2563,14 @@ type Ellipsoid struct {
 	spherical  bool
 }
 
+// Line is an object containing information about a single geodesic.
+// This must be by LineInit(), DirectLine(), GenDirectLine(),
+// or InverseLine() before use.
+type Line struct {
+	e *Ellipsoid
+	l geodGeodesicLine
+}
+
 // NewEllipsoid initializes a new geodesic ellipsoid object.
 //
 // Param radius is the equatorial radius (meters).
@@ -2395,6 +2646,244 @@ func (e *Ellipsoid) Inverse(
 	}
 }
 
+// The general inverse geodesic calculation.
+//
+// Param lat1 latitude of point 1 (degrees).
+// Param lon1 longitude of point 1 (degrees).
+// Param lat2 latitude of point 2 (degrees).
+// Param lon2 longitude of point 2 (degrees).
+// Out param s12 pointer to the distance from point 1 to point 2
+//  (meters).
+// Out param azi1 pointer to the azimuth at point 1 (degrees).
+// Out param azi2 pointer to the (forward) azimuth at point 2 (degrees).
+// Out param m12 pointer to the reduced length of geodesic (meters).
+// Out param M12 pointer to the geodesic scale of point 2 relative to
+//   point 1 (dimensionless).
+// Out param M21 pointer to the geodesic scale of point 1 relative to
+//   point 2 (dimensionless).
+// Out param S12 pointer to the area under the geodesic
+//   (meters-squared).
+// Returns a12 arc length from point 1 to point 2 (degrees).
+//
+// lat1 and lat2 should be in the range [-90, +90].  Any of the
+// "return" arguments s12, etc., may be replaced by nil, if you do not need
+// some quantities computed.
+func (e *Ellipsoid) GenInverse(
+	lat1 float64, lon1 float64, lat2 float64, lon2 float64,
+	s12 *float64, azi1 *float64, azi2 *float64,
+	m12 *float64, M12 *float64, M21 *float64, S12 *float64,
+) float64 {
+	return geodGenInverse(&e.g,
+		lat1, lon1, lat2, lon2, s12, azi1, azi2, m12, M12, M21, S12)
+}
+
+// LineInit initializes a geodesic Line object.
+//
+// Param lat1 latitude of point 1 (degrees).
+// Param lon1 longitude of point 1 (degrees).
+// Param azi1 azimuth at point 1 (degrees).
+// Param caps bitor'ed combination of Mask values specifying the
+//   capabilities the geodesic Line object should possess, i.e., which
+//   quantities can be returned in calls to Line.Position() and
+//   Line.GenPosition().
+//
+// lat1 should be in the range [-90, +90].
+//
+// The Mask values are:
+// - caps |= Latitude for the latitude lat2; this is
+//   added automatically,
+// - caps |= Longitude for the latitude lon2,
+// - caps |= Azimuth for the latitude azi2; this is
+//   added automatically,
+// - caps |= Distance for the distance s12,
+// - caps |= ReducedLength for the reduced length m12,
+// - caps |= GeodesicScale for the geodesic scales M12
+//   and M21,
+// - caps |= Area for the area S12,
+// - caps |= DistanceIn permits the length of the
+//   geodesic to be given in terms of s12; without this capability the
+//   length can only be specified in terms of arc length.
+// .
+// A value of caps = 0 is treated as Latitude | Longitude |
+// Azimuth | DistanceIn (to support the solution of the "standard"
+// direct problem).
+func (e *Ellipsoid) LineInit(lat1, lon1, azi1 float64, caps Mask) Line {
+	var l Line
+	l.e = e
+	geodLineInit(&l.l, &e.g, lat1, lon1, azi1, caps)
+	return l
+}
+
+// DirectLine initializes a geodesic Line object in terms of the direct
+// geodesic problem.
+//
+// Param lat1 latitude of point 1 (degrees).
+// Param lon1 longitude of point 1 (degrees).
+// Param azi1 azimuth at point 1 (degrees).
+// Param s12 distance from point 1 to point 2 (meters); it can be
+//   negative.
+// Param caps bitor'ed combination of Mask values specifying the
+//   capabilities the geodesic Line object should possess, i.e., which
+//   quantities can be returned in calls to Line.Position() and
+//   Line.GenPosition()
+//
+// This function sets point 3 of the geodesic Line to correspond to point
+// 2 of the direct geodesic problem.  See LineInit() for more
+// information.
+func (e *Ellipsoid) DirectLine(lat1, lon1, azi1, s12 float64, caps Mask) Line {
+	var l Line
+	l.e = e
+	geodDirectLine(&l.l, &e.g, lat1, lon1, azi1, s12, caps)
+	return l
+}
+
+// GenDirectLine initializes a geodesic Line object in terms of the direct
+// geodesic problem specified in terms of either distance or arc length.
+//
+// Param lat1 latitude of point 1 (degrees).
+// Param lon1 longitude of point 1 (degrees).
+// Param azi1 azimuth at point 1 (degrees).
+// Param flags either NoFlags or ArcMode to determining the
+//   meaning of the s12_a12.
+// Param s12_a12 if flags = NoFlags, this is the distance
+//   from point 1 to point 2 (meters); if flags = ArcMode, it is
+//   the arc length from point 1 to point 2 (degrees); it can be
+//   negative.
+// Param caps bitor'ed combination of Mask values specifying the
+//   capabilities the geodesic Line object should possess, i.e., which
+//   quantities can be returned in calls to Line.Position() and
+//   Line.GenPosition().
+//
+// This function sets point 3 of the geodesic Line to correspond to point
+// 2 of the direct geodesic problem.  See LineInit() for more
+// information.
+func (e *Ellipsoid) GenDirectLine(
+	lat1, lon1, azi1 float64,
+	flags Flags, s12_a12 float64,
+	caps Mask,
+) Line {
+	var l Line
+	l.e = e
+	geodGenDirectLine(&l.l, &e.g, lat1, lon1, azi1, flags, s12_a12, caps)
+	return l
+}
+
+// InverseLine initializes a geodesic Line object in terms of the inverse
+// geodesic problem.
+//
+// Param lat1 latitude of point 1 (degrees).
+// Param lon1 longitude of point 1 (degrees).
+// Param lat2 latitude of point 2 (degrees).
+// Param lon2 longitude of point 2 (degrees).
+// Param caps bitor'ed combination of Mask values specifying the
+//   capabilities the Line object should possess, i.e., which
+//   quantities can be returned in calls to Line.Position() and
+//   Line.GenPosition().
+//
+// This function sets point 3 of the Line to correspond to point
+// 2 of the inverse geodesic problem.  See LineInit() for more
+// information.
+func (e *Ellipsoid) InverseLine(lat1, lon1, lat2, lon2 float64, caps Mask) Line {
+	var l Line
+	l.e = e
+	geodInverseLine(&l.l, &e.g, lat1, lon1, lat2, lon2, caps)
+	return l
+}
+
+// Position computes the position along a geodesic Line.
+//
+// Param s12 distance from point 1 to point 2 (meters); it can be
+//   negative.
+// Out param lat2 pointer to the latitude of point 2 (degrees).
+// Out param lon2 pointer to the longitude of point 2 (degrees); requires
+//   that l was initialized with caps |= Longitude.
+// Out param azi2 pointer to the (forward) azimuth at point 2 (degrees).
+//
+// l must have been initialized with a call, e.g., to LineInit(),
+// with caps |= DistanceIn (or caps = 0).  The values of lon2
+// and azi2 returned are in the range [-180, +180].  Any of
+// the "return" arguments plat2, etc., may be replaced by nil, if you do not
+// need some quantities computed.
+func (l *Line) Position(s12 float64, lat2, lon2, azi2 *float64) {
+	geodPosition(&l.l, s12, lat2, lon2, azi2)
+}
+
+// GenPosition is the general position function.
+//
+// Param flags bitor'ed combination of Flags; flags &
+//   ArcMode determines the meaning of s12_a12 and flags &
+//   LongUnroll "unrolls" lon2; if flags & ArcMode is 0,
+//   then l must have been initialized with caps |= DistanceIn.
+// Param s12_a12 if flags & ArcMode is 0, this is the
+//   distance from point 1 to point 2 (meters); otherwise it is the
+//   arc length from point 1 to point 2 (degrees); it can be
+//   negative.
+// Out param lat2 pointer to the latitude of point 2 (degrees).
+// Out param lon2 pointer to the longitude of point 2 (degrees); requires
+//   that l was initialized with caps |= Longitude.
+// Out param azi2 pointer to the (forward) azimuth at point 2 (degrees).
+// Out param s12 pointer to the distance from point 1 to point 2
+//   (meters); requires that l was initialized with caps |=
+//   Distance.
+// Out param m12 pointer to the reduced length of geodesic (meters);
+//   requires that l was initialized with caps |= ReducedLength.
+// Out param M12 pointer to the geodesic scale of point 2 relative to
+//   point 1 (dimensionless); requires that l was initialized with caps
+//   |= GeodesicScale.
+// Out param M21 pointer to the geodesic scale of point 1 relative to
+//   point 2 (dimensionless); requires that l was initialized with caps
+//   |= GeodesicScale.
+// Out param S12 pointer to the area under the geodesic
+//   (meters<sup>2</sup>); requires that l was initialized with caps |=
+//   GEOD_AREA.
+// Returns a12 arc length from point 1 to point 2 (degrees).
+//
+// l must have been initialized with a call to geod_lineinit() with
+// caps |= DistanceIn.  The value azi2 returned is in the range
+// [-180, +180].  Any of the "return" arguments plat2,
+// etc., may be replaced by nil, if you do not need some quantities
+// computed.  Requesting a value which l is not capable of computing
+// is not an error; the corresponding argument will not be altered.
+//
+// With flags & LongUnroll bit set, the longitude is "unrolled" so
+// that the quantity lon2 - lon1 indicates how many times and in
+// what sense the geodesic encircles the ellipsoid.
+func (l *Line) GenPosition(
+	flags Flags, s12_a12 float64,
+	lat2, lon2, azi2, s12, m12, M12, M21, S12 *float64,
+) float64 {
+	return geodGenPosition(&l.l, flags, s12_a12,
+		lat2, lon2, azi2, s12, m12, M12, M21, S12)
+}
+
+// SetDistance specifies position of point 3 in terms of distance.
+//
+// Param s13 si the distance from point 1 to point 3 (meters); it
+//   can be negative.
+//
+// This is only useful if the line object has been constructed
+// with caps |= DistanceIn.
+func (l *Line) SetDistance(s13 float64) {
+	geodSetDistance(&l.l, s13)
+}
+
+// GenSetDistance specifies position of point 3 in terms of either distance or
+// arc length.
+//
+// Param flags; either NoFlags or ArcMode to determining the
+//   meaning of the s13_a13.
+// Param s13_a13; if flags = NoFlags, this is the distance
+//   from point 1 to point 3 (meters); if flags = ArcMode, it is
+//   the arc length from point 1 to point 3 (degrees); it can be
+//   negative.
+//
+// If flags = NoFlags, this calls Line.SetDistance().  If flags =
+// ArcMode, the s13 is only set if the Line object has
+// been constructed with caps |= Distance.
+func (l *Line) GenSetDistance(flags Flags, s13_a13 float64) {
+	geodGenSetDistance(&l.l, flags, s13_a13)
+}
+
 // Direct solves the direct geodesic problem.
 //
 // Param g is a pointer to the geod_geodesic object specifying the ellipsoid.
@@ -2419,6 +2908,51 @@ func (e *Ellipsoid) Direct(
 	} else {
 		geodDirect(&e.g, lat1, lon1, azi1, s12, lat2, lon2, azi2)
 	}
+}
+
+// GenDirect solves the general direct geodesic problem.
+//
+// Param lat1 is the latitude of point 1 (degrees).
+// Param lon1 is thelongitude of point 1 (degrees).
+// Param azi1 is theazimuth at point 1 (degrees).
+// Param flags is the bitor'ed combination of Flags; flags &
+//   ArgMode determines the meaning of s12_a12 and flags &
+//   LongUnroll "unrolls" lon2.
+// Param s12_a12 if flags & ArcMode is 0, this is the distance
+//   from point 1 to point 2 (meters); otherwise it is the arc length
+//   from point 1 to point 2 (degrees); it can be negative.
+// Out param lat2 is a pointer to the latitude of point 2 (degrees).
+// Out param lon2 is a pointer to the longitude of point 2 (degrees).
+// Out param azi2 is a pointer to the (forward) azimuth at point 2 (degrees).
+// Out param s12 is a pointer to the distance from point 1 to point 2
+//   (meters).
+// Out param m12 is a pointer to the reduced length of geodesic (meters).
+// Out param M12 is a pointer to the geodesic scale of point 2 relative to
+//   point 1 (dimensionless).
+// Out param M21 is a pointer to the geodesic scale of point 1 relative to
+//   point 2 (dimensionless).
+// Out param S12 is a pointer to the area under the geodesic
+//   (meters-squared).
+// Returns a12 arc length from point 1 to point 2 (degrees).
+//
+// lat1 should be in the range [-90,+90].  The function value
+// a12 equals s12_a12 if flags & ArcMode.  Any of the "return"
+// arguments, plat2, etc., may be replaced by nil, if you do not need some
+// quantities computed.
+//
+// With flags & LongUnroll bit set, the longitude is "unrolled" so
+// that the quantity lon2 - lon1 indicates how many times and in
+// what sense the geodesic encircles the ellipsoid.
+func (e *Ellipsoid) GenDirect(
+	lat1, lon1, azi1 float64,
+	flags Flags, s12_a12 float64,
+	lat2, lon2, azi2 *float64,
+	s12, m12 *float64,
+	M12, M21 *float64,
+	S12 *float64,
+) float64 {
+	return geodGenDirect(&e.g, lat1, lon1, azi1,
+		flags, s12_a12, lat2, lon2, azi2, s12, m12, M12, M21, S12)
 }
 
 // Polygon struct for accumulating information about a geodesic polygon.
@@ -2463,9 +2997,9 @@ func (p *Polygon) AddPoint(lat, lon float64) {
 // Param sign, if set then return a signed result for the area if
 //   the polygon is traversed in the "wrong" direction instead of returning
 //   the area for the rest of the earth.
-// Out param pA is a pointer to the area of the polygon (meters-squared);
-// Out param pP is a pointer to the perimeter of the polygon or length of the
-//   polyline (meters).
+// Out param area is a pointer to the area of the polygon (meters-squared);
+// Out param perimeter is a pointer to the perimeter of the polygon or length
+//   of the polyline (meters).
 // Returns the number of points.
 //
 // The area and perimeter are accumulated at two times the standard floating
@@ -2477,8 +3011,8 @@ func (p *Polygon) AddPoint(lat, lon float64) {
 // pA or pP to nil, if you do not want the corresponding quantity returned.
 //
 // More points can be added to the polygon after this call.
-func (p *Polygon) Compute(clockwise, sign bool, area, perimeter *float64) int {
-	return int(geodPolygonCompute(&p.e.g, &p.p, clockwise, sign, area, perimeter))
+func (p *Polygon) Compute(clockwise, sign bool, area, perimeter *float64) uint {
+	return geodPolygonCompute(&p.e.g, &p.p, clockwise, sign, area, perimeter)
 }
 
 // AddEdge adds an edge to the polygon or polyline.
@@ -2494,58 +3028,51 @@ func (p *Polygon) Clear() {
 	geodPolygonClear(&p.p)
 }
 
-func sign(a float64) float64 {
-	if a < 0 {
-		return -1
-	}
-	if a > 0 {
-		return 1
-	}
-	return 0
-}
-
-// crossAlongSuffix performs both cross-track and/or along-track operations
-func crossAlongSuffix(
-	e *Ellipsoid,
-	// position of point
-	lat, lon float64,
-	// start and azimuth of segment
-	startLat, startLon float64, azi1 float64,
-	// return values
-	cross, along *float64,
-) {
-	r := e.Radius()
-	θ12 := azi1 * radians
-	var a13 float64
-	var d13 float64
-	e.Inverse(startLat, startLon, lat, lon, &d13, &a13, nil)
-	δ13 := d13 / r
-	θ13 := a13 * radians
-	sδ13, cδ13 := math.Sincos(δ13)
-	δxt := math.Asin(sδ13 * math.Sin(θ13-θ12))
-	if cross != nil {
-		dXt := δxt * r
-		*cross = dXt
-	}
-	if along != nil {
-		δat := math.Acos(cδ13 / math.Abs(math.Cos(δxt)))
-		*along = δat * sign(math.Cos(θ12-θ13)) * r
-	}
-}
-
-// CrossAlong provides the cross-track and along-track distances from
-// point (lat/lon) to segment (start/end).
+// TestPoint returns the results assuming a tentative final test point is
+// added; however, the data for the test point is not saved.  This lets you
+// report a running result for the perimeter and area as the user moves the
+// mouse cursor.  Ordinary floating point arithmetic is used to accumulate the
+// data for the test point; thus the area and perimeter returned are less
+// accurate than if Polygon.AddPoint() and Polygon.Compute() are used.
 //
-// Out param cross is the cross-track distance from point to segment
-// Out param along is the along-track distance from point to segment
-func (e *Ellipsoid) CrossAlong(
-	lat, lon float64,
-	startLat, startLon, endLat, endLon float64,
-	cross, along *float64,
-) {
-	var azi1 float64
-	e.Inverse(startLat, startLon, endLat, endLon, nil, &azi1, nil)
-	if cross != nil || along != nil {
-		crossAlongSuffix(e, lat, lon, startLat, startLon, azi1, cross, along)
-	}
+// Param lat is the latitude of the test point (degrees).
+// Param lon is the longitude of the test point (degrees).
+// Param reverse if set then clockwise (instead of
+//   counter-clockwise) traversal counts as a positive area.
+// Param sign if set then return a signed result for the area if
+//   the polygon is traversed in the "wrong" direction instead of returning
+//   the area for the rest of the earth.
+// Out param area is a pointer to the area of the polygon (meters-squared);
+//   only set if polyline is non-zero in the call to PolygonInit().
+// Out apram perimeter is a pointer to the perimeter of the polygon or length
+//   of the polyline (meters).
+// Returns the number of points.
+//
+// lat should be in the range [-90,+90].
+func (p *Polygon) TestPoint(lat, lon float64, reverse, sign bool, area, perimeter *float64) uint {
+	return geodPolygonTestPoint(&p.e.g, &p.p, lat, lon, reverse, sign, area, perimeter)
+}
+
+// TestEdge returns the results assuming a tentative final test point is added
+// via an azimuth and distance; however, the data for the test point is not
+// saved.
+// This lets you report a running result for the perimeter and area as the
+// user moves the mouse cursor.  Ordinary floating point arithmetic is used
+// to accumulate the data for the test point; thus the area and perimeter
+// returned are less accurate than if Polygon.AddEdge() and
+// Polygon.Compute() are used.
+// Param azi is the azimuth at current point (degrees).
+// Param s is the distance from current point to final test point (meters).
+// Param reverse if set then clockwise (instead of
+//   counter-clockwise) traversal counts as a positive area.
+// Param sign if set then return a signed result for the area if
+//   the polygon is traversed in the "wrong" direction instead of returning
+//   the area for the rest of the earth.
+// Out param area is a pointer to the area of the polygon (meters-squared);
+//   only set if polyline is non-zero in the call to PolygonInit().
+// Out param perimeter is a pointer to the perimeter of the polygon or length
+//   of the polyline (meters).
+// Returns the number of points
+func (p *Polygon) TestEdge(azi, s float64, reverse, sign bool, area, perimeter *float64) uint {
+	return geodPolygonTestEdge(&p.e.g, &p.p, azi, s, reverse, sign, area, perimeter)
 }
