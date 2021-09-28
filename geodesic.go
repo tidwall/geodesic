@@ -2669,17 +2669,15 @@ func (e *Ellipsoid) Inverse(
 // Param lon1 longitude of point 1 (degrees).
 // Param lat2 latitude of point 2 (degrees).
 // Param lon2 longitude of point 2 (degrees).
-// Out param s12 pointer to the distance from point 1 to point 2
-//  (meters).
+// Out param s12 pointer to the distance from point 1 to point 2 (meters).
 // Out param azi1 pointer to the azimuth at point 1 (degrees).
 // Out param azi2 pointer to the (forward) azimuth at point 2 (degrees).
 // Out param m12 pointer to the reduced length of geodesic (meters).
 // Out param M12 pointer to the geodesic scale of point 2 relative to
-//   point 1 (dimensionless).
+// point 1 (dimensionless).
 // Out param M21 pointer to the geodesic scale of point 1 relative to
-//   point 2 (dimensionless).
-// Out param S12 pointer to the area under the geodesic
-//   (meters-squared).
+// point 2 (dimensionless).
+// Out param S12 pointer to the area under the geodesic (meters-squared).
 // Returns a12 arc length from point 1 to point 2 (degrees).
 //
 // lat1 and lat2 should be in the range [-90, +90].  Any of the
@@ -2700,27 +2698,24 @@ func (e *Ellipsoid) GenInverse(
 // Param lon1 longitude of point 1 (degrees).
 // Param azi1 azimuth at point 1 (degrees).
 // Param caps bitor'ed combination of Mask values specifying the
-//   capabilities the geodesic Line object should possess, i.e., which
-//   quantities can be returned in calls to Line.Position() and
-//   Line.GenPosition().
+// capabilities the geodesic Line object should possess, i.e., which
+// quantities can be returned in calls to Line.Position() and
+// Line.GenPosition().
 //
 // lat1 should be in the range [-90, +90].
 //
 // The Mask values are:
-// - caps |= Latitude for the latitude lat2; this is
-//   added automatically,
+// - caps |= Latitude for the latitude lat2; this is added automatically,
 // - caps |= Longitude for the latitude lon2,
-// - caps |= Azimuth for the latitude azi2; this is
-//   added automatically,
+// - caps |= Azimuth for the latitude azi2; this is added automatically,
 // - caps |= Distance for the distance s12,
 // - caps |= ReducedLength for the reduced length m12,
-// - caps |= GeodesicScale for the geodesic scales M12
-//   and M21,
+// - caps |= GeodesicScale for the geodesic scales M12 and M21,
 // - caps |= Area for the area S12,
-// - caps |= DistanceIn permits the length of the
-//   geodesic to be given in terms of s12; without this capability the
-//   length can only be specified in terms of arc length.
-// .
+// - caps |= DistanceIn permits the length of the geodesic to be given in terms
+// of s12; without this capability the length can only be specified in terms of
+// arc length.
+//
 // A value of caps = 0 is treated as Latitude | Longitude |
 // Azimuth | DistanceIn (to support the solution of the "standard"
 // direct problem).
@@ -2738,11 +2733,11 @@ func (e *Ellipsoid) LineInit(lat1, lon1, azi1 float64, caps Mask) Line {
 // Param lon1 longitude of point 1 (degrees).
 // Param azi1 azimuth at point 1 (degrees).
 // Param s12 distance from point 1 to point 2 (meters); it can be
-//   negative.
+// negative.
 // Param caps bitor'ed combination of Mask values specifying the
-//   capabilities the geodesic Line object should possess, i.e., which
-//   quantities can be returned in calls to Line.Position() and
-//   Line.GenPosition()
+// capabilities the geodesic Line object should possess, i.e., which
+// quantities can be returned in calls to Line.Position() and
+// Line.GenPosition()
 //
 // This function sets point 3 of the geodesic Line to correspond to point
 // 2 of the direct geodesic problem.  See LineInit() for more
@@ -2761,15 +2756,15 @@ func (e *Ellipsoid) DirectLine(lat1, lon1, azi1, s12 float64, caps Mask) Line {
 // Param lon1 longitude of point 1 (degrees).
 // Param azi1 azimuth at point 1 (degrees).
 // Param flags either NoFlags or ArcMode to determining the
-//   meaning of the s12_a12.
+// meaning of the s12_a12.
 // Param s12_a12 if flags = NoFlags, this is the distance
-//   from point 1 to point 2 (meters); if flags = ArcMode, it is
-//   the arc length from point 1 to point 2 (degrees); it can be
-//   negative.
+// from point 1 to point 2 (meters); if flags = ArcMode, it is
+// the arc length from point 1 to point 2 (degrees); it can be
+// negative.
 // Param caps bitor'ed combination of Mask values specifying the
-//   capabilities the geodesic Line object should possess, i.e., which
-//   quantities can be returned in calls to Line.Position() and
-//   Line.GenPosition().
+// capabilities the geodesic Line object should possess, i.e., which
+// quantities can be returned in calls to Line.Position() and
+// Line.GenPosition().
 //
 // This function sets point 3 of the geodesic Line to correspond to point
 // 2 of the direct geodesic problem.  See LineInit() for more
@@ -2793,9 +2788,9 @@ func (e *Ellipsoid) GenDirectLine(
 // Param lat2 latitude of point 2 (degrees).
 // Param lon2 longitude of point 2 (degrees).
 // Param caps bitor'ed combination of Mask values specifying the
-//   capabilities the Line object should possess, i.e., which
-//   quantities can be returned in calls to Line.Position() and
-//   Line.GenPosition().
+// capabilities the Line object should possess, i.e., which
+// quantities can be returned in calls to Line.Position() and
+// Line.GenPosition().
 //
 // This function sets point 3 of the Line to correspond to point
 // 2 of the inverse geodesic problem.  See LineInit() for more
@@ -2810,10 +2805,10 @@ func (e *Ellipsoid) InverseLine(lat1, lon1, lat2, lon2 float64, caps Mask) Line 
 // Position computes the position along a geodesic Line.
 //
 // Param s12 distance from point 1 to point 2 (meters); it can be
-//   negative.
+// negative.
 // Out param lat2 pointer to the latitude of point 2 (degrees).
 // Out param lon2 pointer to the longitude of point 2 (degrees); requires
-//   that l was initialized with caps |= Longitude.
+// that l was initialized with caps |= Longitude.
 // Out param azi2 pointer to the (forward) azimuth at point 2 (degrees).
 //
 // l must have been initialized with a call, e.g., to LineInit(),
@@ -2828,31 +2823,31 @@ func (l *Line) Position(s12 float64, lat2, lon2, azi2 *float64) {
 // GenPosition is the general position function.
 //
 // Param flags bitor'ed combination of Flags; flags &
-//   ArcMode determines the meaning of s12_a12 and flags &
-//   LongUnroll "unrolls" lon2; if flags & ArcMode is 0,
-//   then l must have been initialized with caps |= DistanceIn.
+// ArcMode determines the meaning of s12_a12 and flags &
+// LongUnroll "unrolls" lon2; if flags & ArcMode is 0,
+// then l must have been initialized with caps |= DistanceIn.
 // Param s12_a12 if flags & ArcMode is 0, this is the
-//   distance from point 1 to point 2 (meters); otherwise it is the
-//   arc length from point 1 to point 2 (degrees); it can be
-//   negative.
+// distance from point 1 to point 2 (meters); otherwise it is the
+// arc length from point 1 to point 2 (degrees); it can be
+// negative.
 // Out param lat2 pointer to the latitude of point 2 (degrees).
 // Out param lon2 pointer to the longitude of point 2 (degrees); requires
-//   that l was initialized with caps |= Longitude.
+// that l was initialized with caps |= Longitude.
 // Out param azi2 pointer to the (forward) azimuth at point 2 (degrees).
 // Out param s12 pointer to the distance from point 1 to point 2
-//   (meters); requires that l was initialized with caps |=
-//   Distance.
+// (meters); requires that l was initialized with caps |=
+// Distance.
 // Out param m12 pointer to the reduced length of geodesic (meters);
-//   requires that l was initialized with caps |= ReducedLength.
+// requires that l was initialized with caps |= ReducedLength.
 // Out param M12 pointer to the geodesic scale of point 2 relative to
-//   point 1 (dimensionless); requires that l was initialized with caps
-//   |= GeodesicScale.
+// point 1 (dimensionless); requires that l was initialized with caps
+// |= GeodesicScale.
 // Out param M21 pointer to the geodesic scale of point 1 relative to
-//   point 2 (dimensionless); requires that l was initialized with caps
-//   |= GeodesicScale.
+// point 2 (dimensionless); requires that l was initialized with caps
+// |= GeodesicScale.
 // Out param S12 pointer to the area under the geodesic
-//   (meters<sup>2</sup>); requires that l was initialized with caps |=
-//   GEOD_AREA.
+// (meters<sup>2</sup>); requires that l was initialized with caps |=
+// GEOD_AREA.
 // Returns a12 arc length from point 1 to point 2 (degrees).
 //
 // l must have been initialized with a call to geod_lineinit() with
@@ -2875,8 +2870,8 @@ func (l *Line) GenPosition(
 
 // SetDistance specifies position of point 3 in terms of distance.
 //
-// Param s13 si the distance from point 1 to point 3 (meters); it
-//   can be negative.
+// Param s13 si the distance from point 1 to point 3 (meters); it can be
+// negative.
 //
 // This is only useful if the line object has been constructed
 // with caps |= DistanceIn.
@@ -2887,12 +2882,11 @@ func (l *Line) SetDistance(s13 float64) {
 // GenSetDistance specifies position of point 3 in terms of either distance or
 // arc length.
 //
-// Param flags; either NoFlags or ArcMode to determining the
-//   meaning of the s13_a13.
-// Param s13_a13; if flags = NoFlags, this is the distance
-//   from point 1 to point 3 (meters); if flags = ArcMode, it is
-//   the arc length from point 1 to point 3 (degrees); it can be
-//   negative.
+// Param flags; either NoFlags or ArcMode to determining the meaning of the
+// s13_a13.
+// Param s13_a13; if flags = NoFlags, this is the distance from point 1 to
+// point 3 (meters); if flags = ArcMode, it is the arc length from point 1 to
+// point 3 (degrees); it can be negative.
 //
 // If flags = NoFlags, this calls Line.SetDistance().  If flags =
 // ArcMode, the s13 is only set if the Line object has
@@ -2933,23 +2927,21 @@ func (e *Ellipsoid) Direct(
 // Param lon1 is thelongitude of point 1 (degrees).
 // Param azi1 is theazimuth at point 1 (degrees).
 // Param flags is the bitor'ed combination of Flags; flags &
-//   ArgMode determines the meaning of s12_a12 and flags &
-//   LongUnroll "unrolls" lon2.
+// ArgMode determines the meaning of s12_a12 and flags &
+// LongUnroll "unrolls" lon2.
 // Param s12_a12 if flags & ArcMode is 0, this is the distance
-//   from point 1 to point 2 (meters); otherwise it is the arc length
-//   from point 1 to point 2 (degrees); it can be negative.
+// from point 1 to point 2 (meters); otherwise it is the arc length
+// from point 1 to point 2 (degrees); it can be negative.
 // Out param lat2 is a pointer to the latitude of point 2 (degrees).
 // Out param lon2 is a pointer to the longitude of point 2 (degrees).
 // Out param azi2 is a pointer to the (forward) azimuth at point 2 (degrees).
-// Out param s12 is a pointer to the distance from point 1 to point 2
-//   (meters).
+// Out param s12 is a pointer to the distance from point 1 to point 2 (meters).
 // Out param m12 is a pointer to the reduced length of geodesic (meters).
 // Out param M12 is a pointer to the geodesic scale of point 2 relative to
-//   point 1 (dimensionless).
+// point 1 (dimensionless).
 // Out param M21 is a pointer to the geodesic scale of point 1 relative to
-//   point 2 (dimensionless).
-// Out param S12 is a pointer to the area under the geodesic
-//   (meters-squared).
+// point 2 (dimensionless).
+// Out param S12 is a pointer to the area under the geodesic (meters-squared).
 // Returns a12 arc length from point 1 to point 2 (degrees).
 //
 // lat1 should be in the range [-90,+90].  The function value
@@ -3009,14 +3001,14 @@ func (p *Polygon) AddPoint(lat, lon float64) {
 
 // Compute the results for a polygon
 //
-// Param reverse, if set then clockwise (instead of
-//   counter-clockwise) traversal counts as a positive area.
+// Param reverse, if set then clockwise (instead of counter-clockwise)
+// traversal counts as a positive area.
 // Param sign, if set then return a signed result for the area if
-//   the polygon is traversed in the "wrong" direction instead of returning
-//   the area for the rest of the earth.
+// the polygon is traversed in the "wrong" direction instead of returning
+// the area for the rest of the earth.
 // Out param area is a pointer to the area of the polygon (meters-squared);
 // Out param perimeter is a pointer to the perimeter of the polygon or length
-//   of the polyline (meters).
+// of the polyline (meters).
 // Returns the number of points.
 //
 // The area and perimeter are accumulated at two times the standard floating
@@ -3055,14 +3047,14 @@ func (p *Polygon) Clear() {
 // Param lat is the latitude of the test point (degrees).
 // Param lon is the longitude of the test point (degrees).
 // Param reverse if set then clockwise (instead of
-//   counter-clockwise) traversal counts as a positive area.
+// counter-clockwise) traversal counts as a positive area.
 // Param sign if set then return a signed result for the area if
-//   the polygon is traversed in the "wrong" direction instead of returning
-//   the area for the rest of the earth.
+// the polygon is traversed in the "wrong" direction instead of returning
+// the area for the rest of the earth.
 // Out param area is a pointer to the area of the polygon (meters-squared);
-//   only set if polyline is non-zero in the call to PolygonInit().
+// only set if polyline is non-zero in the call to PolygonInit().
 // Out apram perimeter is a pointer to the perimeter of the polygon or length
-//   of the polyline (meters).
+// of the polyline (meters).
 // Returns the number of points.
 //
 // lat should be in the range [-90,+90].
@@ -3080,15 +3072,15 @@ func (p *Polygon) TestPoint(lat, lon float64, reverse, sign bool, area, perimete
 // Polygon.Compute() are used.
 // Param azi is the azimuth at current point (degrees).
 // Param s is the distance from current point to final test point (meters).
-// Param reverse if set then clockwise (instead of
-//   counter-clockwise) traversal counts as a positive area.
-// Param sign if set then return a signed result for the area if
-//   the polygon is traversed in the "wrong" direction instead of returning
-//   the area for the rest of the earth.
+// Param reverse if set then clockwise (instead of counter-clockwise) traversal
+// counts as a positive area.
+// Param sign if set then return a signed result for the area if the polygon is
+// traversed in the "wrong" direction instead of returning the area for the
+// rest of the earth.
 // Out param area is a pointer to the area of the polygon (meters-squared);
-//   only set if polyline is non-zero in the call to PolygonInit().
+// only set if polyline is non-zero in the call to PolygonInit().
 // Out param perimeter is a pointer to the perimeter of the polygon or length
-//   of the polyline (meters).
+// of the polyline (meters).
 // Returns the number of points
 func (p *Polygon) TestEdge(azi, s float64, reverse, sign bool, area, perimeter *float64) uint {
 	return geodPolygonTestEdge(&p.e.g, &p.p, azi, s, reverse, sign, area, perimeter)
