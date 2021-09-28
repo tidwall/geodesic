@@ -125,3 +125,5 @@ fmt.Printf("%f area (km²), %f perimeter (meters)\n", area/1000000, perimeter)
 // output:
 // 294838.722804 area (km²), 2254910.021767 perimeter (meters)
 ```
+
+For full api documentation see https://pkg.go.dev/github.com/tidwall/geodesic#pkg-index.

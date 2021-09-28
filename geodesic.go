@@ -1,7 +1,7 @@
 // Package geodesic and an API for the geodesic routines in Go
 //
-// This an implementation in Go of the geodesic algorithms described in
-// - C. F. F. Karney, Algorithms for geodesics,
+// This an implementation in Go of the geodesic algorithms described in:
+//   C. F. F. Karney, Algorithms for geodesics,
 //   J. Geodesy 87, 43--55 (2013);
 //   DOI: 10.1007/s00190-012-0578-z;
 //   addenda: https://geographiclib.sourceforge.io/geod-addenda.html;
@@ -12,13 +12,10 @@
 // https://geographiclib.sourceforge.io/
 //
 // Also contains spherical algorithms derived from the Geodesy project.
-//
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
-// Geodesy representation conversion functions    (c) Chris Veness 2002-2019 //
-//                                                               MIT Licence //
-// www.movable-type.co.uk/scripts/latlong.html                               //
-// www.movable-type.co.uk/scripts/js/geodesy/geodesy-library.html#dms        //
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
+//   Geodesy representation conversion functions   (c) Chris Veness 2002-2019
+//                                                                MIT Licence
+//   www.movable-type.co.uk/scripts/latlong.html
+//   www.movable-type.co.uk/scripts/js/geodesy/geodesy-library.html#dms
 //
 // Ported to Go by Joshua Baker <joshbaker77@gmail.com> and licensed
 // under the MIT License.
