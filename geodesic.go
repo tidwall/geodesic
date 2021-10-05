@@ -2588,6 +2588,21 @@ type Line struct {
 	l geodGeodesicLine
 }
 
+// A13 returns the length to reference point
+func (l *Line) A13() float64 { return l.l.a13 }
+
+// S13 returns distance to reference point
+func (l *Line) S13() float64 { return l.l.s13 }
+
+// Lat1 returns the starting latitude
+func (l *Line) Lat1() float64 { return l.l.lat1 }
+
+// Lon1 returns the starting longitude
+func (l *Line) Lon1() float64 { return l.l.lon1 }
+
+// Azi1 returns the starting azimuth
+func (l *Line) Azi1() float64 { return l.l.azi1 }
+
 // NewEllipsoid initializes a new geodesic ellipsoid object.
 //
 // Param radius is the equatorial radius (meters).
