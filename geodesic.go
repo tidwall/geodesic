@@ -666,17 +666,14 @@ func angRound(x float64) float64 {
 	return y
 }
 
-func remquo(x float64, y float64, q *float64) float64 {
-	*q = x / y
-	return mod(x, y)
+func remquo(x float64, y float64) (float64, int) {
+	return math.Remainder(x, y), int(math.Round(x / y))
 }
 
 func sincosdx(x float64, sinx *float64, cosx *float64) {
 	/* In order to minimize round-off errors, this function exactly reduces
 	 * the argument to the range [-45, 45] before converting it to radians. */
-	var r, s, c float64
-	var q float64
-	r = remquo(x, 90, &q)
+	r, q := remquo(x, quarterDegrees)
 	/* now abs(r) <= 45 */
 	r *= degree
 	/* Possibly could call the gnu extension sincos */
@@ -1491,10 +1488,6 @@ func c4f(g *geodGeodesic, eps float64, c []float64) {
 
 func copysign(x, y float64) float64 {
 	return math.Copysign(x, y)
-}
-
-func mod(x, y float64) float64 {
-	return math.Mod(x, y)
 }
 
 func atan(x float64) float64 {

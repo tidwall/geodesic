@@ -3,10 +3,13 @@ package geodesic
 import (
 	_ "embed"
 	"encoding/binary"
+	"fmt"
 	"math"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 // The "test.data" file has been generated from the
@@ -169,5 +172,25 @@ func TestLineInitFlags(t *testing.T) {
 	}
 	if S12 == 0 {
 		t.Error("gen pos: missing S12")
+	}
+}
+
+func TestRemquo(t *testing.T) {
+	tests := []struct {
+		numer, rem float64
+		quo        int
+	}{
+		{numer: 10, rem: 10, quo: 0},
+		{numer: 50, rem: 5, quo: 1},
+		{numer: 100, rem: 10, quo: 2},
+		{numer: 150, rem: 15, quo: 3},
+	}
+
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("%g", tc.numer), func(t *testing.T) {
+			r, q := remquo(tc.numer, 45)
+			require.Equal(t, tc.rem, r)
+			require.Equal(t, tc.quo, q)
+		})
 	}
 }
