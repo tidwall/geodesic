@@ -1,0 +1,79 @@
+name: Go build, test and lint
+
+on:
+  push:
+    tags:
+      - v*
+    branches:
+      - main
+  pull_request:
+permissions:
+  contents: read
+
+jobs:
+  go:
+    strategy:
+      matrix:
+        go: [1.17, 1.18]
+        golangcli: [v1.46.2]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    name: lint
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Setup
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Go Cache Paths
+        id: go-cache-paths
+        run: |
+          echo "::set-output name=go-build::$(go env GOCACHE)"
+          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+
+      - name: Go Build Cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build }}
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+
+      - name: Go Mod Cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-mod }}
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+
+      - name: Validate go mod
+        if: runner.os != 'Windows'
+        run: |
+          go mod tidy
+          git --no-pager diff && [[ 0 -eq $(git status --porcelain | wc -l) ]]
+
+      - name: Go Lint Standard
+        if: runner.os != 'Windows'
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: ${{ matrix.golangci }}
+          args: "--out-${NO_FUTURE}format colored-line-number"
+          skip-pkg-cache: true
+          skip-build-cache: true
+
+      - name: Go Lint Windows
+        if: runner.os == 'Windows'
+        uses: golangci/golangci-lint-action@v3
+        env:
+          outformat: out-format
+        with:
+          version: ${{ matrix.golangci }}
+          args: "--%outformat% colored-line-number"
+          skip-pkg-cache: true
+          skip-build-cache: true
+
+      - name: Go Build
+        run: go build ./...
+
+      - name: Go Test
+        run: go test -race -v ./...
