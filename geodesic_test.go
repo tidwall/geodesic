@@ -54,6 +54,8 @@ func TestInput(t *testing.T) {
 }
 
 func testPolygon(t *testing.T, points []float64, vals []float64) {
+	t.Helper()
+
 	p := WGS84.PolygonInit(false)
 	for i := 0; i < len(points); i += 2 {
 		p.AddPoint(points[i+0], points[i+1])
@@ -93,7 +95,6 @@ func testDirect(t *testing.T, lat1, lon1, lat2, lon2, s12, azi1, azi2 float64) {
 }
 
 func TestSpherical(t *testing.T) {
-
 	if !Globe.Spherical() {
 		t.Fatal()
 	}

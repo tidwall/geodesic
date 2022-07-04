@@ -26,8 +26,10 @@ import (
 )
 
 const (
-	pi                         = float64(math.Pi)
-	degree                     = pi / 180
+	pi                         = math.Pi
+	quarterDegrees             = 90
+	halfDegrees                = 2 * quarterDegrees
+	degree                     = pi / halfDegrees
 	epsilon                    = float64(7.)/3 - float64(4.)/3 - float64(1.)
 	digits                     = 53
 	geographicLibGeodesicOrder = 6
@@ -44,7 +46,7 @@ const (
 	realmin                    = math.SmallestNonzeroFloat64
 )
 
-// Mask values for the caps argument to InverseLine
+// Mask values for the caps argument to InverseLine.
 type Mask uint
 
 const (
@@ -64,7 +66,7 @@ const (
  *
  **********************************************************************/
 
-// Flag values for the flags argument to GenPosition
+// Flags values for the flags argument to GenPosition.
 type Flags uint
 
 const (
@@ -135,7 +137,6 @@ func atan2dx(y float64, x float64) float64 {
 	 * converting it to degrees and mapping the result to the correct
 	 * quadrant. */
 	var q = 0
-	var ang float64
 	if fabs(y) > fabs(x) {
 		x, y = y, x
 		q = 2
@@ -145,7 +146,7 @@ func atan2dx(y float64, x float64) float64 {
 		q++
 	}
 	/* here x >= 0 and x >= abs(y), so angle is in [-pi/4, pi/4] */
-	ang = atan2(y, x) / degree
+	ang := atan2(y, x) / degree
 	switch q {
 	/* Note that atan2d(-0.0, 1.0) will return -0.  However, we expect that
 	 * atan2d will not be called with y = -0.  If need be, include
@@ -153,17 +154,11 @@ func atan2dx(y float64, x float64) float64 {
 	 *   case 0: ang = 0 + ang; break;
 	 */
 	case 1:
-		var v float64
-		if y >= 0 {
-			v = 180
-		} else {
-			v = -180
-		}
-		ang = v - ang
+		return math.Copysign(halfDegrees, y) - ang
 	case 2:
-		ang = 90 - ang
+		return quarterDegrees - ang
 	case 3:
-		ang = -90 + ang
+		return -quarterDegrees + ang
 	}
 	return ang
 }
@@ -216,7 +211,7 @@ func geodGenInverseInt(g *geodGeodesic,
 	lon12 = float64(lonsign) * angRound(lon12)
 	lon12s = angRound((180 - lon12) - float64(lonsign)*lon12s)
 	lam12 = lon12 * degree
-	if lon12 > 90 {
+	if lon12 > quarterDegrees {
 		sincosdx(lon12s, &slam12, &clam12)
 		clam12 = -clam12
 	} else {
@@ -296,10 +291,9 @@ func geodGenInverseInt(g *geodGeodesic,
 	dn1 = sqrt(1 + g.ep2*sq(sbet1))
 	dn2 = sqrt(1 + g.ep2*sq(sbet2))
 
-	meridian = lat1 == -90 || slam12 == 0
+	meridian = lat1 == -quarterDegrees || slam12 == 0
 
 	if meridian {
-
 		/* Endpoints are on a single full meridian, so the geodesic might lie on
 		* a meridian. */
 
@@ -365,7 +359,6 @@ func geodGenInverseInt(g *geodGeodesic,
 		}
 		a12 = lon12 / g.f1
 	} else if !meridian {
-
 		/* Now point1 and point2 belong within a hemisphere bounded by a
 		* meridian and geodesic is neither meridional or equatorial. */
 
@@ -675,10 +668,8 @@ func sincosdx(x float64, sinx *float64, cosx *float64) {
 	 * the argument to the range [-45, 45] before converting it to radians. */
 	r, q := remquo(x, quarterDegrees)
 	/* now abs(r) <= 45 */
-	r *= degree
-	/* Possibly could call the gnu extension sincos */
-	s, c = sincos(r)
-	switch uint64(int64(q)) & 3 {
+	s, c := sincos(r * degree)
+	switch uint(q) & 3 {
 	case 0:
 		*sinx = s
 		*cosx = c
@@ -691,16 +682,15 @@ func sincosdx(x float64, sinx *float64, cosx *float64) {
 	default:
 		*sinx = -c
 		*cosx = s
-		/* case 3U */
 	}
-	if x != 0 {
-		*sinx += 0
-		*cosx += 0
+
+	if *sinx == 0 {
+		*sinx = math.Copysign(*sinx, x) // special values from F.10.1.13
 	}
 }
 
 func latFix(x float64) float64 {
-	if fabs(x) > 90 {
+	if fabs(x) > quarterDegrees {
 		return math.NaN()
 	}
 	return x
@@ -855,8 +845,8 @@ var coeffC2f = [...]float64{
 
 /* The coefficients C2[l] in the Fourier expansion of B2 */
 func c2f(eps float64, c []float64) {
-	var eps2 = eps * eps //sq(eps)
-	var d = eps
+	eps2 := eps * eps
+	d := eps
 	var o int
 	for l := 1; l <= nC2; l++ { /* l is index of C2[l] */
 		m := (nC2 - l) / 2 /* order of polynomial in eps^2 */
@@ -896,7 +886,6 @@ func sinCosSeries(sinpb ibool, sinx, cosx float64, c []float64, n int) float64 {
 		y1 = ar*y0 - y1 + c[ci]
 		ci--
 		y0 = ar*y1 - y0 + c[ci]
-
 	}
 	if sinpb == iTrue {
 		return 2 * sinx * cosx * y0 /* sin(2 * x) * y0 */
@@ -983,7 +972,6 @@ func inverseStart(g *geodGeodesic,
 		if g.f >= 0 {                     /* In fact f == 0 does not get here */
 			/* x = dlong, y = dlat */
 			{
-
 				k2 := sq(sbet1) * g.ep2
 				eps := k2 / (2*(1+sqrt(1+k2)) + k2)
 				lamscale = g.f * cbet1 * a3f(g, eps) * pi
@@ -1289,7 +1277,7 @@ func astroid(x, y float64) float64 {
 		u := r
 		var v, uv, w float64
 		if disc >= 0 {
-			T3, T := S+r3, 0.0
+			T3 := S + r3
 			/* Pick the sign on the sqrt to maximize abs(T3).  This minimizes loss
 			 * of precision due to cancellation.  The result is unchanged because
 			 * of the way the T is used in definition of u. */
@@ -1299,7 +1287,7 @@ func astroid(x, y float64) float64 {
 				T3 += sqrt(disc)
 			} /* T3 = (r * t)^3 */
 			/* N.B. cbrt always returns the real root.  cbrt(-8) = -2. */
-			T = cbrt(T3) /* T = r * t */
+			T := cbrt(T3) /* T = r * t */
 			/* T can be zero; but then r2 / T -> 0. */
 			var v float64
 			if T != 0 {
@@ -1770,9 +1758,8 @@ func geodLineInitInt(
 		l.A4 = sq(l.a) * l.calp0 * l.salp0 * g.e2
 		l.B41 = sinCosSeries(iFalse, l.ssig1, l.csig1, l.C4a[:], nC4)
 	}
-	l.s13 = math.NaN() //NaN
+	l.s13 = math.NaN()
 	l.a13 = l.s13
-
 }
 
 /* The coefficients C1p[l] in the Fourier expansion of B1p */
@@ -1810,7 +1797,6 @@ func geodGenPosition(
 	pM12 *float64, pM21 *float64,
 	pS12 *float64,
 ) float64 {
-
 	var lat2, lon2, azi2, s12, m12, M12, M21, S12 float64
 	/* Avoid warning about uninitialized B12. */
 	var sig12, ssig12, csig12, B12, AB1 float64
@@ -1888,7 +1874,7 @@ func geodGenPosition(
 			csig2 := l.csig1*csig12 - l.ssig1*ssig12
 			B12 = sinCosSeries(iTrue, ssig2, csig2, l.C1a[:], nC1)
 			serr := (1+l.A1m1)*(sig12+(B12-l.B11)) - s12A12/l.b
-			sig12 = sig12 - serr/sqrt(1+l.k2*sq(ssig2))
+			sig12 -= serr / sqrt(1+l.k2*sq(ssig2))
 			ssig12, csig12 = sincos(sig12)
 			/* Update B12 below */
 		}
@@ -1933,7 +1919,8 @@ func geodGenPosition(
 		/* omg12 = omg2 - omg1 */
 
 		if (flags & LongUnroll) != 0 {
-			omg12 = E * (sig12 - (atan2(ssig2, csig2) - atan2(l.ssig1, l.csig1)) + (atan2(E*somg2, comg2) - atan2(E*l.somg1, l.comg1)))
+			omg12 = E * (sig12 - (atan2(ssig2, csig2) - atan2(l.ssig1, l.csig1)) +
+				(atan2(E*somg2, comg2) - atan2(E*l.somg1, l.comg1)))
 		} else {
 			omg12 = atan2(somg2*l.comg1-comg2*l.somg1, comg2*l.comg1+somg2*l.somg1)
 		}
@@ -2086,7 +2073,7 @@ func accadd(s *[2]float64, y float64) {
 	if s[0] == 0 {
 		s[0] = u
 	} else {
-		s[1] = s[1] + u
+		s[1] += u
 	}
 }
 
@@ -2578,19 +2565,19 @@ type Line struct {
 	l geodGeodesicLine
 }
 
-// A13 returns the length to reference point
+// A13 returns the length to reference point.
 func (l *Line) A13() float64 { return l.l.a13 }
 
-// S13 returns distance to reference point
+// S13 returns distance to reference point.
 func (l *Line) S13() float64 { return l.l.s13 }
 
-// Lat1 returns the starting latitude
+// Lat1 returns the starting latitude.
 func (l *Line) Lat1() float64 { return l.l.lat1 }
 
-// Lon1 returns the starting longitude
+// Lon1 returns the starting longitude.
 func (l *Line) Lon1() float64 { return l.l.lon1 }
 
-// Azi1 returns the starting azimuth
+// Azi1 returns the starting azimuth.
 func (l *Line) Azi1() float64 { return l.l.azi1 }
 
 // NewEllipsoid initializes a new geodesic ellipsoid object.
@@ -2598,7 +2585,7 @@ func (l *Line) Azi1() float64 { return l.l.azi1 }
 // Param radius is the equatorial radius (meters).
 // Param flattening is the flattening factor of the ellipsoid.
 //
-// The WGS84 pacakge-level variable is a pre-initialized ellipsoid
+// The WGS84 package-level variable is a pre-initialized ellipsoid
 // representing Earth.
 func NewEllipsoid(radius, flattening float64) *Ellipsoid {
 	e := &Ellipsoid{radius: radius, flattening: flattening}
@@ -2610,7 +2597,7 @@ func NewEllipsoid(radius, flattening float64) *Ellipsoid {
 // simplified operations on a sphere.
 //
 // The Inverse and Direct operations will often be more computationally
-// efficient than NewEllipsoid because it uses simplier great-circle
+// efficient than NewEllipsoid because it uses simpler great-circle
 // calculations such as the Haversine formula.
 //
 // Param radius is the equatorial radius (meters).
@@ -2623,12 +2610,12 @@ func NewSpherical(radius float64) *Ellipsoid {
 	return e
 }
 
-// Radius of the Ellipsoid
+// Radius of the Ellipsoid.
 func (e *Ellipsoid) Radius() float64 {
 	return e.radius
 }
 
-// Flattening of the Ellipsoid
+// Flattening of the Ellipsoid.
 func (e *Ellipsoid) Flattening() float64 {
 	return e.flattening
 }
@@ -2668,7 +2655,7 @@ func (e *Ellipsoid) Inverse(
 	}
 }
 
-// The general inverse geodesic calculation.
+// GenInverse is the general inverse geodesic calculation.
 //
 // Param lat1 latitude of point 1 (degrees).
 // Param lon1 longitude of point 1 (degrees).
@@ -3086,7 +3073,7 @@ func (p *Polygon) TestPoint(lat, lon float64, reverse, sign bool, area, perimete
 // only set if polyline is non-zero in the call to PolygonInit().
 // Out param perimeter is a pointer to the perimeter of the polygon or length
 // of the polyline (meters).
-// Returns the number of points
+// Returns the number of points.
 func (p *Polygon) TestEdge(azi, s float64, reverse, sign bool, area, perimeter *float64) uint {
 	return geodPolygonTestEdge(&p.e.g, &p.p, azi, s, reverse, sign, area, perimeter)
 }
