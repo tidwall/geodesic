@@ -1,0 +1,72 @@
+run:
+  concurrency: 4
+  deadline: 5m
+
+linters-settings:
+  govet:
+    check-shadowing: false
+  gocyclo:
+    min-complexity: 20
+  maligned:
+    suggest-new: true
+  dupl:
+    threshold: 100
+  goconst:
+    min-len: 2
+    min-occurrences: 4
+  cyclop:
+    max-complexity: 15
+  misspell:
+    ignore-words:
+      - ect
+  ireturn:
+    allow:
+      - anon
+      - error
+      - empty
+      - stdlib
+      - (or|er)$
+      - tempFile
+
+linters:
+  enable-all: true
+  disable:
+    - interfacer
+    - gas
+    - megacheck
+    - structcheck
+    - staticcheck
+    - varnamelen
+    - gochecknoglobals
+    - scopelint
+    - funlen
+    - godox
+    - exhaustivestruct
+    - goerr113
+    - wsl
+    - nlreturn
+    - gomnd
+    - paralleltest
+    - wrapcheck
+    - testpackage
+    - golint
+    - maligned
+    - gofumpt
+    - forbidigo
+    - exhaustruct
+    - nonamedreturns
+    - tagliatelle
+    - asciicheck
+    - gocognit
+    - nestif
+    - revive
+    - gocritic
+    - gocyclo
+    - cyclop
+    - maintidx
+    - godot
+    - stylecheck
+
+issues:
+  exclude-use-default: false
+  max-same-issues: 0
