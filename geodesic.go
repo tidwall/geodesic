@@ -37,11 +37,8 @@ const (
 	nA2                        = geographicLibGeodesicOrder
 	nC2                        = geographicLibGeodesicOrder
 	nA3                        = geographicLibGeodesicOrder
-	nA3x                       = nA3
 	nC3                        = geographicLibGeodesicOrder
-	nC3x                       = ((nC3 * (nC3 - 1)) / 2)
 	nC4                        = geographicLibGeodesicOrder
-	nC4x                       = ((nC4 * (nC4 + 1)) / 2)
 	nC                         = (geographicLibGeodesicOrder + 1)
 	tol0                       = epsilon
 	realmin                    = math.SmallestNonzeroFloat64
@@ -77,14 +74,12 @@ const (
 )
 
 const (
-	capNone = 0
-	capC1   = 1 << 0
-	capC1p  = 1 << 1
-	capC2   = 1 << 2
-	capC3   = 1 << 3
-	capC4   = 1 << 4
-	capAll  = 0x1F
-	outAll  = 0x7F80
+	capC1  = 1 << 0
+	capC1p = 1 << 1
+	capC2  = 1 << 2
+	capC3  = 1 << 3
+	capC4  = 1 << 4
+	outAll = 0x7F80
 )
 
 var (
@@ -671,17 +666,14 @@ func angRound(x float64) float64 {
 	return y
 }
 
-func remquo(x float64, y float64, q *float64) float64 {
-	*q = x / y
-	return mod(x, y)
+func remquo(x float64, y float64) (float64, int) {
+	return math.Remainder(x, y), int(math.Round(x / y))
 }
 
 func sincosdx(x float64, sinx *float64, cosx *float64) {
 	/* In order to minimize round-off errors, this function exactly reduces
 	 * the argument to the range [-45, 45] before converting it to radians. */
-	var r, s, c float64
-	var q float64
-	r = remquo(x, 90, &q)
+	r, q := remquo(x, quarterDegrees)
 	/* now abs(r) <= 45 */
 	r *= degree
 	/* Possibly could call the gnu extension sincos */
@@ -1498,10 +1490,6 @@ func copysign(x, y float64) float64 {
 	return math.Copysign(x, y)
 }
 
-func mod(x, y float64) float64 {
-	return math.Mod(x, y)
-}
-
 func atan(x float64) float64 {
 	return math.Atan(x)
 }
@@ -1697,8 +1685,10 @@ func geodLineInitInt(
 	l.c2 = g.c2
 	l.f1 = g.f1
 	/* If caps is 0 assume the standard direct calculation */
-	if caps != 0 {
+	if caps == 0 {
 		l.caps = DistanceIn | Longitude
+	} else {
+		l.caps = caps
 	}
 	/* always allow latitude and azimuth and unrolling of longitude */
 	l.caps |= Latitude | Azimuth | Mask(LongUnroll)

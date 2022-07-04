@@ -3,10 +3,13 @@ package geodesic
 import (
 	_ "embed"
 	"encoding/binary"
+	"fmt"
 	"math"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 // The "test.data" file has been generated from the
@@ -131,5 +134,63 @@ func TestSpherical(t *testing.T) {
 			t.Fatalf("direct failure (%f %f %f %f %f %f %f)",
 				lat1, lon1, lat2, lon2, s12, azi1, azi2)
 		}
+	}
+}
+
+func TestLineInitFlags(t *testing.T) {
+	lat0, lon0, azi0 := 37.750000, -17.500000, 5.793761558385
+	line := WGS84.LineInit(lat0, lon0, azi0,
+		Distance|DistanceIn|ReducedLength|GeodesicScale|Area,
+	)
+
+	s := 1899641.643510
+	var lat2, lon2, azi2, s12, m12, M12, M21, S12 float64
+	line.GenPosition(NoFlags,
+		s, &lat2, &lon2, &azi2, &s12, &m12, &M12, &M21, &S12,
+	)
+
+	if lat2 == 0 {
+		t.Error("gen pos: missing lat2")
+	}
+	if lon0 == 0 {
+		t.Error("gen pos: missing lon0")
+	}
+	if azi2 == 0 {
+		t.Error("gen pos: missing azi2")
+	}
+	if s12 == 0 {
+		t.Error("gen pos: missing s12")
+	}
+	if m12 == 0 {
+		t.Error("gen pos: missing m12")
+	}
+	if M12 == 0 {
+		t.Error("gen pos: missing M12")
+	}
+	if M21 == 0 {
+		t.Error("gen pos: missing M21")
+	}
+	if S12 == 0 {
+		t.Error("gen pos: missing S12")
+	}
+}
+
+func TestRemquo(t *testing.T) {
+	tests := []struct {
+		numer, rem float64
+		quo        int
+	}{
+		{numer: 10, rem: 10, quo: 0},
+		{numer: 50, rem: 5, quo: 1},
+		{numer: 100, rem: 10, quo: 2},
+		{numer: 150, rem: 15, quo: 3},
+	}
+
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("%g", tc.numer), func(t *testing.T) {
+			r, q := remquo(tc.numer, 45)
+			require.Equal(t, tc.rem, r)
+			require.Equal(t, tc.quo, q)
+		})
 	}
 }
